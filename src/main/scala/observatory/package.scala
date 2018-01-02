@@ -4,7 +4,7 @@ import org.apache.spark.SparkContext
 
 package object observatory {
   Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
-  lazy val conf = new SparkConf().setMaster("local[4]").setAppName("Temperatures") 
+  lazy val conf = new SparkConf().setMaster("local[8]").setAppName("Temperatures") 
   lazy val sc = new SparkContext(conf)
 
   val epsilon = 0.000001d

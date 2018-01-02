@@ -10,8 +10,8 @@ import scala.collection.parallel.immutable.ParVector
  * @param lon Degrees of longitude, -180 ≤ lon ≤ 180
  */
 case class Location(lat: Double, lon: Double) {
-//  assert(lon >= -180.0d && lon <= 180.0d, "longitude must be greater or equal -180 and lower or equal +180 (" + lat + ", " + lon + ")")
-//  assert(lat <= 90.0d && lat >= -90.0d, "latitude must be greater or equal -90 and lower or equal +90 (" + lat + ", " + lon + ")")
+  //  assert(lon >= -180.0d && lon <= 180.0d, "longitude must be greater or equal -180 and lower or equal +180 (" + lat + ", " + lon + ")")
+  //  assert(lat <= 90.0d && lat >= -90.0d, "latitude must be greater or equal -90 and lower or equal +90 (" + lat + ", " + lon + ")")
 
   lazy val phi = lat * PI / 180
   lazy val lambda = lon * PI / 180
@@ -37,7 +37,8 @@ case class Location(lat: Double, lon: Double) {
     else {
       val deltaRho = acos(sinPhi * that.sinPhi + cosPhi * that.cosPhi * cos(abs(this.lambda - that.lambda)))
       val distance = earthRadius * deltaRho
-      if (distance < 1 /* one kilometer */ ) 0.0d else distance
+      //      if (distance < 1 /* one kilometer */ ) 0.0d else distance
+      distance
     }
 
   def toImageCoordinates(width: Int = 360, height: Int = 180): (Int, Int) =
@@ -102,7 +103,7 @@ case class Tile(x: Int, y: Int, zoom: Int) {
  * @param lat Circle of latitude in degrees, -89 ≤ lat ≤ 90
  * @param lon Line of longitude in degrees, -180 ≤ lon ≤ 179
  */
-case class GridLocation(lat: Int, lon: Int) 
+case class GridLocation(lat: Int, lon: Int)
 
 class Grid {
   private val gridData = new Array[Double](Grid.width * Grid.height)
@@ -168,17 +169,17 @@ case class Color(red: Int, green: Int, blue: Int) {
       min(255, blue + that.blue))
 
   def interpolate(that: Color, weight: Double): Color = {
-    assert(weight >= 0.0d && weight <= 1.0d)
-    val r: Double = round(red * (1 - weight) + that.red * weight)
-    val g: Double = round(green * (1 - weight) + that.green * weight)
-    val b: Double = round(blue * (1 - weight) + that.blue * weight)
+//    assert(weight >= 0.0d && weight <= 1.0d)
+    val r: Double = round(red + weight*(that.red - red))
+    val g: Double = round(green + weight*(that.green - green))
+    val b: Double = round(blue + weight*(that.blue - blue))
     Color(r.toInt, g.toInt, b.toInt)
   }
-  
+
   def distance(that: Color): Double = {
     sqrt((this.red - that.red) * (this.red - that.red) +
-    (this.green - that.green) * (this.green - that.green) +
-    (this.blue - that.blue) * (this.blue - that.blue))
+      (this.green - that.green) * (this.green - that.green) +
+      (this.blue - that.blue) * (this.blue - that.blue))
   }
 }
 

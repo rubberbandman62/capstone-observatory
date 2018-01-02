@@ -55,7 +55,7 @@ object Main extends App {
 
   println("Now generating grid or tiles!")
   val t0 = System.nanoTime()
-  Interaction.generateTiles(Seq((2015, averageTemperaturesPerStation2015.collect)), generateImage)
+  generateTiles(Seq((2015, averageTemperaturesPerStation2015.collect)), generateImage)
 //  val getTemp = makeGrid(averageTemperaturesPerStation2015.collect)
 //  val t1 = System.nanoTime()
 //  println(s"It took ${(t1 - t0) / 1e9} seconds to build the grid/tiles for 2015")

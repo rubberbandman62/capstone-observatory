@@ -36,10 +36,10 @@ trait VisualizationTest extends FunSuite with Checkers {
     assert(allmostEqual(d0, d4))
   }
 
-  test("equal points should distance 0") {
+  test("equal points should have a distance of almost 0") {
     val point1 = Location(90.5 / 2, -250.6 / 4)
     val point2 = Location(45.25, -62.65)
-    assert(point1.gcDistanceTo(point2) == 0.0)
+    assert(point1.gcDistanceTo(point2) === 0.0 +- 0.0005)
   }
 
   test("a point in China is antipode of a point in Argentina") {
@@ -66,7 +66,7 @@ trait VisualizationTest extends FunSuite with Checkers {
     val c = (Location(2.0d, 3.0d), 30.0d)
     val loc = Location(2.0d, 2.0d)
     val predictedTemp = predictTemperature(Seq(a, b, c), loc)
-    assert(predictedTemp === 25.01d +- 0.005d)
+    assert(predictedTemp === 22.5d +- 0.005d)
   }
 
   test("the temperature near a given point should be allmost equal to that temperature") {
@@ -227,11 +227,11 @@ trait VisualizationTest extends FunSuite with Checkers {
     val records = myLocateTemperatures(year, stations, temperatures)
 
     val averages = myLocationYearlyAverageRecords(records)
-    val averagesCollected = averages.collect()
+    // val averagesCollected = averages.collect()
 
     println("create an image for 2015")
     val t0 = System.nanoTime()
-    val image = visualize(averagesCollected, colorScale)
+    val image = visualize(averages.collect(), colorScale)
     val t1 = System.nanoTime()
     val elapsed = ((t1 - t0) * 10000 / 1e9).toInt / 10000.0d
     println("image for 2015 generated after " + elapsed + " seconds.")

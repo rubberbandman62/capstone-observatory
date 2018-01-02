@@ -22,8 +22,8 @@ object Interaction {
    * @param tile Tile coordinates
    * @return A 256×256 image showing the contents of the given tile
    */
-  def tile(temperatures: Iterable[(Location, Temperature)], 
-           colors: Iterable[(Temperature, Color)], 
+  def tile(temperatures: Iterable[(Location, Temperature)],
+           colors: Iterable[(Temperature, Color)],
            tile: Tile): Image = {
     import Visualization._
     val width = 128
@@ -47,22 +47,15 @@ object Interaction {
   def generateTiles[Data](
     yearlyData: Iterable[(Year, Data)],
     generateImage: (Year, Tile, Data) => Unit): Unit = {
-    
-    def generateTilesAndImages(year: Year, tile: Tile, data: Data): Unit = {
-      generateImage(year, tile, data)
-      if (tile.zoom < 3) {
-        generateTilesAndImages(year, Tile(2 * tile.x, 2 * tile.y, tile.zoom + 1), data)
-        generateTilesAndImages(year, Tile(2 * tile.x + 1, 2 * tile.y, tile.zoom + 1), data)
-        generateTilesAndImages(year, Tile(2 * tile.x, 2 * tile.y + 1, tile.zoom + 1), data)
-        generateTilesAndImages(year, Tile(2 * tile.x + 1, 2 * tile.y + 1, tile.zoom + 1), data)
-      }
-    }
 
-    yearlyData foreach {
-      case (year, data) =>
-        generateTilesAndImages(year, Tile(0, 0, 0), data)
-    }
+    for {
+      (year, data) <- yearlyData
+      zoom <- 0 to 3
+      x <- 0 until 1 << zoom
+      y <- 0 until 1 << zoom
+    } generateImage(year, Tile(x, y, zoom), data)
 
   }
 
 }
+  

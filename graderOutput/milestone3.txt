@@ -1,0 +1,33 @@
+Your overall score for this assignment is 0.00 out of 10.00
+
+
+An error occurred while running our tests on your submission.
+
+In order for us to help you, please contact one of the teaching assistants and send
+them the entire feedback message that you received.
+
+======== ERROR LOG OF TESTING TOOL ========
+Timeout when running ScalaTest
+Using Spark's default log4j profile: org/apache/spark/log4j-defaults.properties
+18/01/02 16:17:46 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+18/01/02 16:17:49 INFO FileInputFormat: Total input paths to process : 1
+18/01/02 16:17:50 INFO deprecation: mapred.tip.id is deprecated. Instead, use mapreduce.task.id
+18/01/02 16:17:50 INFO deprecation: mapred.task.id is deprecated. Instead, use mapreduce.task.attempt.id
+18/01/02 16:17:50 INFO deprecation: mapred.task.is.map is deprecated. Instead, use mapreduce.task.ismap
+18/01/02 16:17:50 INFO deprecation: mapred.task.partition is deprecated. Instead, use mapreduce.task.partition
+18/01/02 16:17:50 INFO deprecation: mapred.job.id is deprecated. Instead, use mapreduce.job.id
+18/01/02 16:17:50 INFO FileInputFormat: Total input paths to process : 1
+18/01/02 16:17:50 INFO FileInputFormat: Total input paths to process : 1
+18/01/02 16:17:50 INFO FileInputFormat: Total input paths to process : 1
+18/01/02 16:17:51 INFO FileInputFormat: Total input paths to process : 1
+18/01/02 16:17:51 INFO FileInputFormat: Total input paths to process : 1
+18/01/02 16:17:54 WARN TaskSetManager: Stage 8 contains a task of very large size (11236 KB). The maximum recommended task size is 100 KB.
+
+[Stage 8:>                                                          (0 + 1) / 8]
+[Stage 8:>                                                          (0 + 2) / 8]
+[Stage 8:>                                                          (0 + 3) / 8]
+[Stage 8:>                                                          (0 + 4) / 8]
+[Stage 8:>                                                          (0 + 5) / 8]
+[Stage 8:>                                                          (0 + 6) / 8]
+[Stage 8:>                                                          (0 + 7) / 8]
+[Stage 8:>                                                          (0 + 8) / 8]

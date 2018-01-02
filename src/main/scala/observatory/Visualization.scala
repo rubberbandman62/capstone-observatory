@@ -17,18 +17,30 @@ object Visualization {
    * @return The predicted temperature at `location`
    */
   def predictTemperature(locationsTemperatures: Iterable[(Location, Temperature)], location: Location): Temperature = {
-    val p = 4
+    val p = 2
     val (n, d) = locationsTemperatures.par.aggregate((0.0d, 0.0d))((acc, locTemp) => {
       val gcDist = location.gcDistanceTo(locTemp._1)
-      val poweredDistance = pow(gcDist, p)
-      val weight = if (poweredDistance == 0.00d) 10.0d else 1 / poweredDistance
-//      println("in predictTemperature: " + gcDist + " / " + weight + " / " + locTemp._2) 
+      val weight = if (gcDist < 1.0d) {
+        1000 - (gcDist * 1000).toInt
+      } else 1 / pow(gcDist, p)
       (acc._1 + locTemp._2 * weight, acc._2 + weight)
     }, (acc1, acc2) => (acc1._1 + acc2._1, acc1._2 + acc2._2))
-
-//    println("temperature: " + n + "/" + d)
-
     n / d
+  }
+
+  def predictTemperatureSlow(locationsTemperatures: Iterable[(Location, Temperature)], location: Location): Temperature = {
+    locationsTemperatures.find(_._1 == location)
+      .map(_._2)
+      .getOrElse({
+        val p = 2
+        val (n, d) = locationsTemperatures.map({
+          case (l, t) => {
+            val dist = location.gcDistanceTo(l)
+            (t / pow(dist, p), 1 / pow(dist, p))
+          }
+        }).aggregate((0.0, 0.0))((acc, e) => (acc._1 + e._1, acc._1 + e._1), (acc, e) => (acc._1 + e._1, acc._1 + e._1))
+        n / d
+      })
   }
 
   /**
@@ -61,21 +73,10 @@ object Visualization {
     else if (upper._1 == Double.MaxValue)
       lower._2
     else {
-      val d = (value - upper._1) / (lower._1 - upper._1)
-      upper._2.interpolate(lower._2, d)
+      val d = (value - lower._1) / (upper._1 - lower._1)
+      lower._2.interpolate(upper._2, d)
     }
   }
-
-  def myInterpolateColor(sortedByTemperatures: Array[(Temperature, Color)], value: Temperature): Color =
-    if (sortedByTemperatures.head._1 >= value)
-      sortedByTemperatures.head._2
-    else if (sortedByTemperatures.last._1 <= value)
-      sortedByTemperatures.last._2
-    else {
-      val i = sortedByTemperatures.indexWhere(_._1 >= value)
-      val d = (value - sortedByTemperatures(i)._1) / (sortedByTemperatures(i - 1)._1 - sortedByTemperatures(i)._1)
-      sortedByTemperatures(i)._2.interpolate(sortedByTemperatures(i - 1)._2, d)
-    }
 
   /**
    * @param temperatures Known temperatures
@@ -83,15 +84,16 @@ object Visualization {
    * @return A 360×180 image where each pixel shows the predicted temperature at its location
    */
   def visualize(temperatures: Iterable[(Location, Temperature)], colors: Iterable[(Temperature, Color)]): Image = {
-    val pixels = for {
-      y <- Range(0, 179, 2)
-      x <- Range(0, 359, 2)
-    } yield {
-      val temp = predictTemperature(temperatures, new Location(x, y, 360, 180))
+    val width = 360
+    val height = 180
+    val alpha = 255
+    val pixels = new Array[Pixel](width * height)
+    for (y <- 0 until height; x <- 0 until width) {
+      val temp = predictTemperature(temperatures, new Location(x, y, width, height))
       val color = interpolateColor(colors, temp)
-      Pixel(color.red, color.green, color.blue, 255)
+      pixels(y * width + x) = Pixel(color.red, color.green, color.blue, alpha)
     }
-    Image(180, 90, pixels.toArray).scale(2, ScaleMethod.FastScale)
+    Image(width, height, pixels)
   }
 
 }
