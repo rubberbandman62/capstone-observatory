@@ -17,8 +17,10 @@ object Visualization {
    * @return The predicted temperature at `location`
    */
   def predictTemperature(locationsTemperatures: Iterable[(Location, Temperature)], location: Location): Temperature = {
-    val p = 2
+    val p = 4
     val (n, d) = locationsTemperatures.par.aggregate((0.0d, 0.0d))((acc, locTemp) => {
+      //val gcDist = location.toPoint.haversineEarthDistance(locTemp._1.toPoint)
+      //val gcDist = location.altDistanceTo(locTemp._1)
       val gcDist = location.gcDistanceTo(locTemp._1)
       val weight = if (gcDist < 1.0d) {
         1000 - (gcDist * 1000).toInt
@@ -51,29 +53,40 @@ object Visualization {
   def interpolateColor(points: Iterable[(Temperature, Color)], value: Temperature): Color = {
     // find the closest temperatures t0 and t1 (with colors c0 and c1) next to value
     val (upper, lower) = points.foldLeft(((Double.MaxValue, Color(0, 0, 0)), (Double.MinValue, Color(0, 0, 0))))({
-      case ((upper, lower), (t, c)) => {
-        if (abs(t - value) < 0.05) {
-          ((value, c), (value, c))
-        } else if (t > value && t < upper._1)
-          ((t, c), lower)
-        else if (t < value && t > lower._1)
-          (upper, (t, c))
+      case ((upper, lower), (temperature, color)) => {
+        if (temperature >= value && temperature < upper._1)
+          ((temperature, color), lower)
+        else if (temperature <= value && temperature > lower._1)
+          (upper, (temperature, color))
         else
           (upper, lower)
       }
     })
 
-    // if value exactly matches one temperature than return the corresponding color
-    if (upper._1 == lower._1)
-      upper._2
-    // if value greater than the largest temperature on the scala return the highest temperature 
-    else if (lower._1 == Double.MinValue)
-      upper._2
-    // if value is lower than the lowest temperature on the scala return the lowest temperature 
-    else if (upper._1 == Double.MaxValue)
-      lower._2
+    if (lower._1 == Double.MinValue) upper._2
+    else if (upper._1 == Double.MaxValue) lower._2
+    else
+      lower._2.interpolate(upper._2, (value - lower._1) / (upper._1 - lower._1))
+  }
+
+  def interpolateColorSimple(points: Iterable[(Temperature, Color)], value: Temperature): Color = {
+    // find the closest temperatures t0 and t1 (with colors c0 and c1) next to value
+    val (upper, lower) = points.foldLeft(((Double.MaxValue, Color(0, 0, 0)), (Double.MinValue, Color(0, 0, 0))))({
+      case ((upper, lower), (temperature, color)) => {
+        if (temperature >= value && temperature < upper._1)
+          ((temperature, color), lower)
+        else if (temperature <= value && temperature > lower._1)
+          (upper, (temperature, color))
+        else
+          (upper, lower)
+      }
+    })
+
+    if (lower._1 == Double.MinValue) upper._2
+    else if (upper._1 == Double.MaxValue) lower._2
     else {
-      val d = (value - lower._1) / (upper._1 - lower._1)
+      val half = (upper._1 + lower._1) / 2
+      val d = if (value < half) 0 else 1
       lower._2.interpolate(upper._2, d)
     }
   }
@@ -87,13 +100,36 @@ object Visualization {
     val width = 360
     val height = 180
     val alpha = 255
-    val pixels = new Array[Pixel](width * height)
-    for (y <- 0 until height; x <- 0 until width) {
-      val temp = predictTemperature(temperatures, new Location(x, y, width, height))
-      val color = interpolateColor(colors, temp)
-      pixels(y * width + x) = Pixel(color.red, color.green, color.blue, alpha)
-    }
-    Image(width, height, pixels)
+    
+    val pixels = (0 until width * height).par.map(idx => {
+      val color = interpolateColor(colors, predictTemperature(temperatures, new Location(idx % width, idx / width, width, height)))
+      val pixel = Pixel(color.red, color.green, color.blue, alpha)
+      (idx, pixel)
+    }).seq
+      .sortBy(_._1)
+      .map(_._2)
+    
+    Image(width, height, pixels.toArray)
+    //    val width = 360
+    //    val height = 180
+    //    val alpha = 255
+    //    val pixels = new Array[Pixel](width * height)
+    //    for (y <- 0 until height; x <- 0 until width) {
+    //      val temp = predictTemperature(temperatures, new Location(x, y, width, height))
+    //      val color = interpolateColor(colors, temp)
+    //      pixels(y * width + x) = Pixel(color.red, color.green, color.blue, alpha)
+    //    }
+    //    Image(width, height, pixels)
+    //    val width = 180
+    //    val height = 90
+    //    val alpha = 255
+    //    val pixels = new Array[Pixel](width * height)
+    //    for (y <- 0 until height; x <- 0 until width) {
+    //      val temp = predictTemperature(temperatures, new Location(x, y, width, height))
+    //      val color = interpolateColor(colors, temp)
+    //      pixels(y * width + x) = Pixel(color.red, color.green, color.blue, alpha)
+    //    }
+    //    Image(width, height, pixels).scale(2, ScaleMethod.Bilinear)
   }
 
 }

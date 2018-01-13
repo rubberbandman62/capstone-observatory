@@ -22,9 +22,11 @@ object Visualization2 {
     d01: Temperature,
     d10: Temperature,
     d11: Temperature
-  ): Temperature = {
-    ???
-  }
+  ): Temperature = 
+    d00 * (1 - point.x) * (1 - point.y) +
+    d10 * point.x * (1 - point.y) +
+    d01 * point.y * (1 - point.x) +
+    d11 * point.x * point.y 
 
   /**
     * @param grid Grid to visualize
@@ -37,7 +39,18 @@ object Visualization2 {
     colors: Iterable[(Temperature, Color)],
     tile: Tile
   ): Image = {
-    ???
+    import Visualization._
+    val width = 256
+    val transparency = 127
+    val pixels = tile.toListOfLocations(width).map(location => {
+      val (d00, d10, d01, d11) = Grid.findGridTemperatures(grid, location)
+      val cp = CellPoint(location.lat - location.lat.toInt, location.lon - location.lon.toInt)
+      val temp = bilinearInterpolation(cp, d00, d01, d10, d11)
+      val color = interpolateColor(colors, temp)
+      Pixel(color.red, color.green, color.blue, transparency)
+    })
+
+    Image(width, width, pixels.toArray)
   }
 
 }

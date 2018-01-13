@@ -3,6 +3,7 @@ package observatory
 import com.sksamuel.scrimage.{ Image, Pixel }
 import com.sksamuel.scrimage.ScaleMethod
 import org.apache.spark.rdd.RDD
+import org.apache.commons.math3.util.FastMath._
 
 /**
  * 3rd milestone: interactive visualization
@@ -37,6 +38,21 @@ object Interaction {
     Image(width, width, pixels.toArray).scale(2, ScaleMethod.FastScale)
   }
 
+  def tileSimple(temperatures: Iterable[(Location, Temperature)],
+           colors: Iterable[(Temperature, Color)],
+           tile: Tile): Image = {
+    import Visualization._
+    val width = 256
+    val transparency = 127
+    val pixels = tile.toListOfLocations(width).map(location => {
+      val temp = predictTemperature(temperatures, location)
+      val color = interpolateColorSimple(colors, temp)
+      Pixel(color.red, color.green, color.blue, transparency)
+    })
+
+    Image(width, width, pixels.toArray) //.scale(2, ScaleMethod.FastScale)
+  }
+
   /**
    * Generates all the tiles for zoom levels 0 to 3 (included), for all the given years.
    * @param yearlyData Sequence of (year, data), where `data` is some data associated with
@@ -48,12 +64,13 @@ object Interaction {
     yearlyData: Iterable[(Year, Data)],
     generateImage: (Year, Tile, Data) => Unit): Unit = {
 
-    for {
-      (year, data) <- yearlyData
-      zoom <- 0 to 3
-      x <- 0 until 1 << zoom
-      y <- 0 until 1 << zoom
-    } generateImage(year, Tile(x, y, zoom), data)
+    for ((year, data) <- yearlyData) {
+      for {
+        zoom <- 0 to 3
+        x <- 0 until 1 << zoom
+        y <- 0 until 1 << zoom
+      } generateImage(year, Tile(x, y, zoom), data)
+    }
 
   }
 

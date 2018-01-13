@@ -27,43 +27,54 @@ object Main extends App {
   def generateImage[A <: Array[(Location, Temperature)]](year: Year, tile: Tile, data: A): Unit = {
     val t0 = System.nanoTime()
     val image = Interaction.tile(data, colorScale, tile)
-    val filename = s"target/temperatures/$year/${tile.zoom}/${tile.x}-${tile.y}.png"
-    image.output(new java.io.File(filename))
+    val folderYearZoom = s"target/temperatures/$year/${tile.zoom}"
+    val dir = new java.io.File(folderYearZoom)
+    if (!dir.exists())
+      dir.mkdirs()
+    val filename = s"$folderYearZoom/${tile.x}-${tile.y}.png"
+    val file = new java.io.File(filename)
+    image.output(file)
     val t1 = System.nanoTime()
     println(s"tile $filename took ${((t1 - t0) * 10000 / 1e9).toInt / 10000.0d} seconds to generate.")
   }
-  
+
   import Extraction._
   import Interaction._
   import Manipulation._
 
-  val year = 2015
   val stationsFile = "stations.csv"
-  val temperaturesFile = "2015.csv"
+  val stations = sc.broadcast(loadStations(stationsFile).collect.toMap)
 
   import org.apache.log4j.{ Level, Logger }
   Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
 
   println()
   println("about to locate temperatures")
-  val temperaturesPerStation2015 = myLocateTemperatures(2015, stationsFile, temperaturesFile)
-  
-  println()
-  println("about to calculate averages")
-  val averageTemperaturesPerStation2015 = myLocationYearlyAverageRecords(temperaturesPerStation2015)
-  println("Averages calculated")
 
-  println("Now generating grid or tiles!")
+  val yearlyData = for {
+    year <- 2015 to 2015
+  } yield {
+    val temperaturesFile = s"$year.csv"
+    println()
+    println("locate temperatures for: " + year)
+    val locatedTemperatures = myLocateTemperatures(year, stations, temperaturesFile)
+    println()
+    println("calculate averages for: " + year)
+    (year, myLocationYearlyAverageRecords(locatedTemperatures).collect)
+  }
+
+  println()
+  println("Now generating grid or tiles for all the years")
   val t0 = System.nanoTime()
-  generateTiles(Seq((2015, averageTemperaturesPerStation2015.collect)), generateImage)
-//  val getTemp = makeGrid(averageTemperaturesPerStation2015.collect)
-//  val t1 = System.nanoTime()
-//  println(s"It took ${(t1 - t0) / 1e9} seconds to build the grid/tiles for 2015")
-//  println(s"Temperature at (10,10): ${getTemp(GridLocation(10, 10))}")
-//  println(s"Temperature at (0,0): ${getTemp(GridLocation(0, 0))}")
-//  println(s"Temperature at (-10,-10): ${getTemp(GridLocation(-10, -10))}")
-//  println(s"Temperature at (10,-10): ${getTemp(GridLocation(10, -10))}")
-//  println(s"Temperature at (-10,10): ${getTemp(GridLocation(-10, 10))}")
+  generateTiles(yearlyData, generateImage)
+  //  val getTemp = makeGrid(averageTemperaturesPerStation2015.collect)
+  //  val t1 = System.nanoTime()
+  //  println(s"It took ${(t1 - t0) / 1e9} seconds to build the grid/tiles for 2015")
+  //  println(s"Temperature at (10,10): ${getTemp(GridLocation(10, 10))}")
+  //  println(s"Temperature at (0,0): ${getTemp(GridLocation(0, 0))}")
+  //  println(s"Temperature at (-10,-10): ${getTemp(GridLocation(-10, -10))}")
+  //  println(s"Temperature at (10,-10): ${getTemp(GridLocation(10, -10))}")
+  //  println(s"Temperature at (-10,10): ${getTemp(GridLocation(-10, 10))}")
 
   sc.stop()
 }

@@ -52,11 +52,11 @@ consumption (OutOfMemoryException).
   Falsified after 0 successful property evaluations.
   Location: (VisualizationTest.scala:133)
   Occurred when passed generated values (
-    arg0 = -100.0,
-    arg1 = -82.2193822909544
+    arg0 = 30.636930511720692,
+    arg1 = 23.214838120089382
   )
   Label of failing property:
-    Incorrect computed color at Location(-27.0,-180.0): Color(219,0,36). Expected to be closer to Color(0,0,255) than Color(255,0,0)
+    Incorrect computed color at Location(-35.0,-144.0): Color(130,0,126). Expected to be closer to Color(0,0,255) than Color(255,0,0)
 [Lost Points] 5
 
 [Test Description] [#6 - Interactive user interface] yearSelection must never be out of the selected layer bounds
@@ -104,26 +104,27 @@ Limits: memory: 1600m,  total time: 850s,  per test case time: 240s
 
 ======== DEBUG OUTPUT OF TESTING TOOL ========
 Using Spark's default log4j profile: org/apache/spark/log4j-defaults.properties
-18/01/02 16:05:23 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
-18/01/02 16:05:27 INFO FileInputFormat: Total input paths to process : 1
-18/01/02 16:05:28 INFO deprecation: mapred.tip.id is deprecated. Instead, use mapreduce.task.id
-18/01/02 16:05:28 INFO deprecation: mapred.tip.id is deprecated. Instead, use mapreduce.task.id
-18/01/02 16:05:28 INFO deprecation: mapred.task.id is deprecated. Instead, use mapreduce.task.attempt.id
-18/01/02 16:05:28 INFO deprecation: mapred.task.is.map is deprecated. Instead, use mapreduce.task.ismap
-18/01/02 16:05:28 INFO deprecation: mapred.task.partition is deprecated. Instead, use mapreduce.task.partition
-18/01/02 16:05:28 INFO deprecation: mapred.job.id is deprecated. Instead, use mapreduce.job.id
-18/01/02 16:05:28 INFO FileInputFormat: Total input paths to process : 1
-18/01/02 16:05:28 INFO FileInputFormat: Total input paths to process : 1
-18/01/02 16:05:28 INFO FileInputFormat: Total input paths to process : 1
-18/01/02 16:05:28 INFO FileInputFormat: Total input paths to process : 1
-18/01/02 16:05:28 INFO FileInputFormat: Total input paths to process : 1
-18/01/02 16:05:32 WARN TaskSetManager: Stage 8 contains a task of very large size (11236 KB). The maximum recommended task size is 100 KB.
+18/01/13 13:16:54 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+18/01/13 13:16:58 INFO FileInputFormat: Total input paths to process : 1
+18/01/13 13:16:58 INFO FileInputFormat: Total input paths to process : 1
 
-[Stage 8:>                                                          (0 + 1) / 8]
-[Stage 8:>                                                          (0 + 2) / 8]
-[Stage 8:>                                                          (0 + 3) / 8]
-[Stage 8:>                                                          (0 + 4) / 8]
-[Stage 8:>                                                          (0 + 5) / 8]
-[Stage 8:>                                                          (0 + 6) / 8]
-[Stage 8:>                                                          (0 + 7) / 8]
-[Stage 8:>                                                          (0 + 8) / 8]
+[Stage 1:>                                                          (0 + 0) / 2]18/01/13 13:16:59 INFO deprecation: mapred.tip.id is deprecated. Instead, use mapreduce.task.id
+18/01/13 13:16:59 INFO deprecation: mapred.task.id is deprecated. Instead, use mapreduce.task.attempt.id
+18/01/13 13:16:59 INFO deprecation: mapred.task.is.map is deprecated. Instead, use mapreduce.task.ismap
+18/01/13 13:16:59 INFO deprecation: mapred.task.partition is deprecated. Instead, use mapreduce.task.partition
+18/01/13 13:16:59 INFO deprecation: mapred.job.id is deprecated. Instead, use mapreduce.job.id
+
+                                                                                
+18/01/13 13:16:59 INFO FileInputFormat: Total input paths to process : 1
+18/01/13 13:16:59 INFO FileInputFormat: Total input paths to process : 1
+18/01/13 13:16:59 INFO FileInputFormat: Total input paths to process : 1
+18/01/13 13:16:59 INFO FileInputFormat: Total input paths to process : 1
+
+[Stage 11:>                                                         (0 + 0) / 4]18/01/13 13:17:03 WARN TaskSetManager: Stage 11 contains a task of very large size (22711 KB). The maximum recommended task size is 100 KB.
+
+[Stage 11:>                                                         (0 + 1) / 4]
+[Stage 11:>                                                         (0 + 2) / 4]
+[Stage 11:>                                                         (0 + 3) / 4]
+[Stage 11:>                                                         (0 + 4) / 4]
+[Stage 11:=============================>                            (2 + 2) / 4]
+13 January 2018 at 1:32 PM
