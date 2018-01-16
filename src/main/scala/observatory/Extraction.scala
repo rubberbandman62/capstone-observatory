@@ -67,7 +67,7 @@ object Extraction {
   def loadTemperatures(temperaturesFile: String): RDD[((String, String), (Int, Int, Double))] =
     sc.textFile(fsPath(temperaturesFile))
       .map(line => line.split(","))
-      .map(arr => ((arr(0).trim, arr(1).trim), (arr(2).toInt, arr(3).toInt, toGradCelsius(arr(4).toDouble)))) // .persist(StorageLevel.MEMORY_AND_DISK_SER)
+      .map(arr => ((arr(0).trim, arr(1).trim), (arr(2).toInt, arr(3).toInt, toGradCelsius(arr(4).toDouble)))).persist(StorageLevel.MEMORY_AND_DISK_SER)
       
   /**
    * @param records A sequence containing triplets (date, location, temperature)

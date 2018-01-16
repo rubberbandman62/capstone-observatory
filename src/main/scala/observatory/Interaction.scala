@@ -25,17 +25,24 @@ object Interaction {
    */
   def tile(temperatures: Iterable[(Location, Temperature)],
            colors: Iterable[(Temperature, Color)],
-           tile: Tile): Image = {
+           tile: Tile): Image =
+     myTile(temperatures, colors, tile)
+
+  def myTile(temperatures: Iterable[(Location, Temperature)],
+           colors: Iterable[(Temperature, Color)],
+           tile: Tile,
+           scale: Int = 1,
+           transparency: Int = 127): Image = {
     import Visualization._
-    val width = 128
-    val transparency = 127
-    val pixels = tile.toListOfLocations(width).map(location => {
+    val width = 256 / scale
+    val height = 256 / scale
+    val pixels = tile.toListOfLocations(width).par.map(location => {
       val temp = predictTemperature(temperatures, location)
       val color = interpolateColor(colors, temp)
-      Pixel(color.red, color.green, color.blue, transparency)
+      Pixel(color.red, color.green, color.blue, transparency) 
     })
 
-    Image(width, width, pixels.toArray).scale(2, ScaleMethod.FastScale)
+    Image(width, height, pixels.toArray).scale(scale, ScaleMethod.FastScale)
   }
 
   def tileSimple(temperatures: Iterable[(Location, Temperature)],

@@ -26,7 +26,7 @@ object Main extends App {
 
   def generateImage[A <: Array[(Location, Temperature)]](year: Year, tile: Tile, data: A): Unit = {
     val t0 = System.nanoTime()
-    val image = Interaction.tile(data, colorScale, tile)
+    val image = Interaction.myTile(data, colorScale, tile, scale=1)
     val folderYearZoom = s"target/temperatures/$year/${tile.zoom}"
     val dir = new java.io.File(folderYearZoom)
     if (!dir.exists())
@@ -43,7 +43,7 @@ object Main extends App {
   import Manipulation._
 
   val stationsFile = "stations.csv"
-  val stations = sc.broadcast(loadStations(stationsFile).collect.toMap)
+//  val stations = sc.broadcast(loadStations(stationsFile).collect.toMap)
 
   import org.apache.log4j.{ Level, Logger }
   Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
@@ -57,7 +57,7 @@ object Main extends App {
     val temperaturesFile = s"$year.csv"
     println()
     println("locate temperatures for: " + year)
-    val locatedTemperatures = myLocateTemperatures(year, stations, temperaturesFile)
+    val locatedTemperatures = myJoinedLocateTemperatures(year, stationsFile, temperaturesFile)
     println()
     println("calculate averages for: " + year)
     (year, myLocationYearlyAverageRecords(locatedTemperatures).collect)
@@ -68,8 +68,8 @@ object Main extends App {
   val t0 = System.nanoTime()
   generateTiles(yearlyData, generateImage)
   //  val getTemp = makeGrid(averageTemperaturesPerStation2015.collect)
-  //  val t1 = System.nanoTime()
-  //  println(s"It took ${(t1 - t0) / 1e9} seconds to build the grid/tiles for 2015")
+  val t1 = System.nanoTime()
+  println(s"It took ${(t1 - t0) / 1e9} seconds to build the grid/tiles for 2015")
   //  println(s"Temperature at (10,10): ${getTemp(GridLocation(10, 10))}")
   //  println(s"Temperature at (0,0): ${getTemp(GridLocation(0, 0))}")
   //  println(s"Temperature at (-10,-10): ${getTemp(GridLocation(-10, -10))}")

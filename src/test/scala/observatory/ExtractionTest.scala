@@ -10,15 +10,15 @@ import java.time.LocalDate
 trait ExtractionTest extends FunSuite {
   
   test("extend the file name") {
-    val path1 = fsPath("testStations.csv")
-    val path2 = fsPath("/testStations.csv")
-    assert(path1.endsWith("\\test-classes\\testStations.csv"))
-    assert(path2.endsWith("\\test-classes\\testStations.csv"))
+    val path1 = fsPath("testStations0.csv")
+    val path2 = fsPath("/testStations0.csv")
+    assert(path1.endsWith("\\test-classes\\testStations0.csv"))
+    assert(path2.endsWith("\\test-classes\\testStations0.csv"))
   }
   
   test("import and clean data") {
     val year = 1999
-    val stations = "testStations.csv"
+    val stations = "testStations0.csv"
     val temperatures = "testTemperatures.csv"
     val iter: Iterable[(LocalDate, Location, Temperature)] = locateTemperatures(year, stations, temperatures)
     
@@ -27,7 +27,7 @@ trait ExtractionTest extends FunSuite {
   
   test("calculate average per year") {
     val year = 1999
-    val stations = "testStations.csv"
+    val stations = "testStations0.csv"
     val temperatures = "testTemperatures.csv"
     val records: Iterable[(LocalDate, Location, Temperature)] = locateTemperatures(year, stations, temperatures)
     

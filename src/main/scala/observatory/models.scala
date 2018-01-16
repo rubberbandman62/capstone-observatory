@@ -82,7 +82,7 @@ case class Tile(x: Int, y: Int, zoom: Int) {
 
   def toURI = new java.net.URI("http://tile.openstreetmap.org/" + zoom + "/" + x + "/" + y + ".png")
 
-  private def toListOfRowsOfLocations(level: Int): ParVector[Vector[Location]] = {
+  private def toListOfRowsOfLocations(level: Int): Seq[Seq[Location]] = {
     val threshold = 15
 
     val tileUpperLeft = if (zoom < threshold) Tile(x * 2, y * 2, zoom + 1) else this
@@ -91,8 +91,8 @@ case class Tile(x: Int, y: Int, zoom: Int) {
     val tileLowerRight = if (zoom < threshold) Tile(x * 2 + 1, y * 2 + 1, zoom + 1) else this
 
     if (level <= 1) {
-      ParVector(Vector(tileUpperLeft.toLocation, tileUpperRight.toLocation),
-        Vector(tileLowerLeft.toLocation, tileLowerRight.toLocation))
+      Seq(Seq(tileUpperLeft.toLocation, tileUpperRight.toLocation),
+        Seq(tileLowerLeft.toLocation, tileLowerRight.toLocation))
     } else {
       val leftList = tileUpperLeft.toListOfRowsOfLocations(level - 1) ++
         tileLowerLeft.toListOfRowsOfLocations(level - 1)
@@ -104,9 +104,9 @@ case class Tile(x: Int, y: Int, zoom: Int) {
     }
   }
 
-  def toListOfLocations(width: Int): ParVector[Location] = {
+  def toListOfLocations(width: Int): Seq[Location] = {
     val exp = (log10(width) / log10(2.0)).toInt
-    this.toListOfRowsOfLocations(exp).foldLeft(ParVector[Location]())((z, l) => z ++ l)
+    this.toListOfRowsOfLocations(exp).foldLeft(Seq[Location]())((z, l) => z ++ l)
   }
 
 }
