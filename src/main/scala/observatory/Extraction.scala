@@ -33,11 +33,8 @@ object Extraction {
    * @param temperaturesFile Path of the temperatures resource file to use (e.g. "/1975.csv")
    * @return A sequence containing triplets (date, location, temperature)
    */
-  def locateTemperatures(year: Year, stationsFile: String, temperaturesFile: String): Iterable[(LocalDate, Location, Temperature)] = {
-//    val stations = sc.broadcast(loadStations(stationsFile).collect.toMap)
-//    myLocateTemperatures(year, stations, temperaturesFile).collect()
+  def locateTemperatures(year: Year, stationsFile: String, temperaturesFile: String): Iterable[(LocalDate, Location, Temperature)] = 
     myJoinedLocateTemperatures(year, stationsFile, temperaturesFile).collect()
-  }
 
   def myLocateTemperatures(year: Year, stations: Broadcast[Map[(String, String), (Double, Double)]], temperaturesFile: String): RDD[(LocalDate, Location, Temperature)] = {
     val temperaturesRDD = loadTemperatures(temperaturesFile)

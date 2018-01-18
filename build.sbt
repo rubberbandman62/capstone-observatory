@@ -27,7 +27,8 @@ libraryDependencies ++= Seq(
   // You don’t *have to* use fs2, but in case you want to, we have added the dependency
   "co.fs2" %% "fs2-io" % "0.9.2",
   "org.scalacheck" %% "scalacheck" % "1.12.1" % Test,
-  "junit" % "junit" % "4.10" % Test
+  "junit" % "junit" % "4.10" % Test,
+  "au.com.bytecode" % "opencsv" % "2.4"
 )
 
 courseId := "PCO2sYdDEeW0iQ6RUMSWEQ"

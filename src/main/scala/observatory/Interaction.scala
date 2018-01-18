@@ -26,28 +26,28 @@ object Interaction {
   def tile(temperatures: Iterable[(Location, Temperature)],
            colors: Iterable[(Temperature, Color)],
            tile: Tile): Image =
-     myTile(temperatures, colors, tile)
+    myTile(temperatures, colors, tile)
 
   def myTile(temperatures: Iterable[(Location, Temperature)],
-           colors: Iterable[(Temperature, Color)],
-           tile: Tile,
-           scale: Int = 1,
-           transparency: Int = 127): Image = {
+             colors: Iterable[(Temperature, Color)],
+             tile: Tile,
+             scale: Int = 1,
+             transparency: Int = 127): Image = {
     import Visualization._
     val width = 256 / scale
     val height = 256 / scale
     val pixels = tile.toListOfLocations(width).par.map(location => {
       val temp = predictTemperature(temperatures, location)
       val color = interpolateColor(colors, temp)
-      Pixel(color.red, color.green, color.blue, transparency) 
+      Pixel(color.red, color.green, color.blue, transparency)
     })
 
     Image(width, height, pixels.toArray).scale(scale, ScaleMethod.FastScale)
   }
 
   def tileSimple(temperatures: Iterable[(Location, Temperature)],
-           colors: Iterable[(Temperature, Color)],
-           tile: Tile): Image = {
+                 colors: Iterable[(Temperature, Color)],
+                 tile: Tile): Image = {
     import Visualization._
     val width = 256
     val transparency = 127
@@ -71,13 +71,12 @@ object Interaction {
     yearlyData: Iterable[(Year, Data)],
     generateImage: (Year, Tile, Data) => Unit): Unit = {
 
-    for ((year, data) <- yearlyData) {
-      for {
-        zoom <- 0 to 3
-        x <- 0 until 1 << zoom
-        y <- 0 until 1 << zoom
-      } generateImage(year, Tile(x, y, zoom), data)
-    }
+    for {
+      (year, data) <- yearlyData
+      zoom <- 0 to 3
+      x <- 0 until 1 << zoom
+      y <- 0 until 1 << zoom
+    } generateImage(year, Tile(x, y, zoom), data)
 
   }
 

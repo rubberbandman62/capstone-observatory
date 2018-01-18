@@ -1,9 +1,22 @@
 package observatory
 
-import java.time.LocalDate
-import org.apache.commons.math3.util.FastMath._
-import scala.collection.parallel.immutable.ParVector
-import scala.tools.scalap.scalax.rules.Result
+import org.apache.commons.math3.util.FastMath.PI
+import org.apache.commons.math3.util.FastMath.abs
+import org.apache.commons.math3.util.FastMath.acos
+import org.apache.commons.math3.util.FastMath.atan
+import org.apache.commons.math3.util.FastMath.atan2
+import org.apache.commons.math3.util.FastMath.cos
+import org.apache.commons.math3.util.FastMath.log
+import org.apache.commons.math3.util.FastMath.log10
+import org.apache.commons.math3.util.FastMath.min
+import org.apache.commons.math3.util.FastMath.round
+import org.apache.commons.math3.util.FastMath.signum
+import org.apache.commons.math3.util.FastMath.sin
+import org.apache.commons.math3.util.FastMath.sinh
+import org.apache.commons.math3.util.FastMath.sqrt
+import org.apache.commons.math3.util.FastMath.tan
+import org.apache.commons.math3.util.FastMath.toDegrees
+import org.apache.commons.math3.util.FastMath.toRadians
 
 /**
  * Introduced in Week 1. Represents a location on the globe.
@@ -26,8 +39,6 @@ case class Location(lat: Double, lon: Double) {
 
   private def allmostEqual(x: Double, y: Double): Boolean =
     abs(x - y) < epsilon
-
-  lazy val toPoint: Point = Point(toRadians(lat), toRadians(lon))
 
   def isAntipodeOf(that: Location): Boolean =
     this.antipode == that
@@ -76,31 +87,33 @@ case class Location(lat: Double, lon: Double) {
  * @param zoom Zoom level, 0 ≤ zoom ≤ 19
  */
 case class Tile(x: Int, y: Int, zoom: Int) {
-  def toLocation = new Location(
+  lazy val toLocation = new Location(
     toDegrees(atan(sinh(PI * (1.0 - 2.0 * y.toDouble / (1 << zoom))))),
     x.toDouble / (1 << zoom) * 360.0 - 180.0)
 
   def toURI = new java.net.URI("http://tile.openstreetmap.org/" + zoom + "/" + x + "/" + y + ".png")
 
   private def toListOfRowsOfLocations(level: Int): Seq[Seq[Location]] = {
-    val threshold = 15
+    if (zoom + level >= 19)
+      Seq(Seq(this.toLocation, this.toLocation), Seq(this.toLocation, this.toLocation))
+    else {
+      val tileUpperLeft = Tile(x * 2, y * 2, zoom + 1)
+      val tileUpperRight = Tile(x * 2 + 1, y * 2, zoom + 1)
+      val tileLowerLeft = Tile(x * 2, y * 2 + 1, zoom + 1)
+      val tileLowerRight = Tile(x * 2 + 1, y * 2 + 1, zoom + 1)
 
-    val tileUpperLeft = if (zoom < threshold) Tile(x * 2, y * 2, zoom + 1) else this
-    val tileUpperRight = if (zoom < threshold) Tile(x * 2 + 1, y * 2, zoom + 1) else this
-    val tileLowerLeft = if (zoom < threshold) Tile(x * 2, y * 2 + 1, zoom + 1) else this
-    val tileLowerRight = if (zoom < threshold) Tile(x * 2 + 1, y * 2 + 1, zoom + 1) else this
+      if (level <= 1) {
+        Seq(Seq(tileUpperLeft.toLocation, tileUpperRight.toLocation),
+          Seq(tileLowerLeft.toLocation, tileLowerRight.toLocation))
+      } else {
+        val leftList = tileUpperLeft.toListOfRowsOfLocations(level - 1) ++
+          tileLowerLeft.toListOfRowsOfLocations(level - 1)
 
-    if (level <= 1) {
-      Seq(Seq(tileUpperLeft.toLocation, tileUpperRight.toLocation),
-        Seq(tileLowerLeft.toLocation, tileLowerRight.toLocation))
-    } else {
-      val leftList = tileUpperLeft.toListOfRowsOfLocations(level - 1) ++
-        tileLowerLeft.toListOfRowsOfLocations(level - 1)
+        val rightList = tileUpperRight.toListOfRowsOfLocations(level - 1) ++
+          tileLowerRight.toListOfRowsOfLocations(level - 1)
 
-      val rightList = tileUpperRight.toListOfRowsOfLocations(level - 1) ++
-        tileLowerRight.toListOfRowsOfLocations(level - 1)
-
-      leftList.zip(rightList).map({ case (l, r) => l ++ r })
+        leftList.zip(rightList).map({ case (l, r) => l ++ r })
+      }
     }
   }
 
@@ -119,52 +132,63 @@ case class Tile(x: Int, y: Int, zoom: Int) {
  */
 case class GridLocation(lat: Int, lon: Int)
 
-class Grid {
-  private val gridData = new Array[Temperature](Grid.dataSize)
+class Grid(val data: Map[GridLocation, Temperature]) {
 
-  def get(coordinates: GridLocation): Double =
-    gridData(Grid.index(coordinates.lat, coordinates.lon))
-
-  def +(that: Grid): Grid = {
-    val newGrid = new Grid
-    for (i <- 0 until Grid.dataSize)
-      newGrid.gridData(i) = this.gridData(i) + that.gridData(i)
-    newGrid
+  def get(gridLocation: GridLocation): Double = {
+    val dlat = abs(gridLocation.lat % Grid.resolution)
+    val dlon = abs(gridLocation.lon % Grid.resolution)
+    val lat = gridLocation.lat + dlat
+    val lon = gridLocation.lon - dlon
+    data(GridLocation(lat, lon))
   }
 
-  def /(x: Int): Grid = {
-    val newGrid = new Grid
-    for (i <- 0 until Grid.dataSize)
-      newGrid.gridData(i) = this.gridData(i) / x
-    newGrid
-  }
+  def +(that: Grid): Grid =
+    new Grid((for (location <- data.keys) yield (location, data(location) + that.data(location))).toMap)
+
+  def /(x: Int): Grid =
+    new Grid((for (location <- data.keys) yield (location, data(location) / x)).toMap)
 }
 
 object Grid {
   def apply(temperatures: Iterable[(Location, Temperature)]) = {
-    val newGrid = new Grid
-    for (
-      lat <- Grid.maxy to Grid.miny by -resolution;
+    val newGrid = for {
+      lat <- Grid.maxy to Grid.miny by -resolution
       lon <- Grid.minx to Grid.maxx by resolution
-    ) {
+    } yield {
+      val gridLocation = GridLocation(lat, lon)
       val temp = Visualization.predictTemperature(temperatures, Location(lat, lon))
-      newGrid.gridData(index(lat, lon)) = temp
+      (gridLocation, temp)
     }
-    newGrid
+    new Grid(newGrid.toMap)
+  }
+  
+  def empty() = {
+    val newGrid = for {
+      lat <- Grid.maxy to Grid.miny by -resolution
+      lon <- Grid.minx to Grid.maxx by resolution
+    } yield {
+      val gridLocation = GridLocation(lat, lon)
+      (gridLocation, 0.0d)
+    }
+    new Grid(newGrid.toMap)
   }
 
-  def index(lat: Int, lon: Int) = 
-   -(lat / resolution - maxy / resolution) * width / resolution + lon / resolution - minx / resolution
+  //  def index(lat: Int, lon: Int) = 
+  //   -(lat / resolution - maxy / resolution) * width / resolution + lon / resolution - minx / resolution
 
   def findGridTemperatures(g: GridLocation => Temperature, loc: Location): (Temperature, Temperature, Temperature, Temperature) = {
-    val d00 = g(GridLocation(loc.lat.toInt, loc.lon.toInt))
-    val d10 = g(GridLocation((loc.lat + 1).toInt, loc.lon.toInt))
-    val d01 = g(GridLocation(loc.lat.toInt, (loc.lon + 1).toInt))
-    val d11 = g(GridLocation((loc.lat + 1).toInt, (loc.lon + 1).toInt))
+    val top = if (loc.lat < maxy) (loc.lat + 1).toInt else maxy
+    val left = if (loc.lon > minx) (loc.lon - 1).toInt else minx
+    val bottom = top - 1
+    val right = left + 1
+    val d00 = g(GridLocation(top, left))
+    val d10 = g(GridLocation(top, right))
+    val d01 = g(GridLocation(bottom, left))
+    val d11 = g(GridLocation(bottom, right))
     (d00, d10, d01, d11)
   }
 
-  val resolution = 2
+  val resolution = 1
   val width = 360
   val height = 180
   val minx = -width / 2
@@ -216,29 +240,3 @@ case class Color(red: Int, green: Int, blue: Int) {
 
 }
 
-case class Point(x: Double, y: Double) {
-  lazy val location: Location = Location(toDegrees(x), toDegrees(x))
-
-  /**
-   * Added for special case: https://www.coursera.org/learn/scala-capstone/discussions/weeks/2/threads/YY0u6Ax8EeeqzRJFs29uDA
-   *
-   * @param that Point for distance calculatuion
-   * @return distance on earth in meters
-   */
-  def haversineEarthDistance(that: Point): Double = {
-    val radius = 6372.8
-    radius * gcDistanceTo(that) * 1000
-  }
-
-  /**
-   * @param that Point for distance calculatuion
-   * @return distance in radians
-   */
-  def gcDistanceTo(that: Point): Double = {
-    val deltaX = abs(that.x - x)
-    val deltaY = abs(that.y - y)
-
-    val a = pow(sin(deltaX / 2), 2) + cos(x) * cos(that.x) * pow(sin(deltaY / 2), 2)
-    2 * atan2(sqrt(a), sqrt(1 - a))
-  }
-}

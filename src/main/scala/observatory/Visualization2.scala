@@ -1,6 +1,7 @@
 package observatory
 
 import com.sksamuel.scrimage.{Image, Pixel}
+import scala.math._
 
 /**
   * 5th milestone: value-added information visualization
@@ -44,7 +45,7 @@ object Visualization2 {
     val transparency = 127
     val pixels = tile.toListOfLocations(width).map(location => {
       val (d00, d10, d01, d11) = Grid.findGridTemperatures(grid, location)
-      val cp = CellPoint(location.lat - location.lat.toInt, location.lon - location.lon.toInt)
+      val cp = CellPoint(abs(location.lat - location.lat.toInt), abs(location.lon - location.lon.toInt))
       val temp = bilinearInterpolation(cp, d00, d01, d10, d11)
       val color = interpolateColor(colors, temp)
       Pixel(color.red, color.green, color.blue, transparency)

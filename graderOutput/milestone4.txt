@@ -1,0 +1,5 @@
+We encountered the following warnings when grading this part:
+
+The grader ran out of memory while grading your submission. Please try submitting an optimized solution. If you think your solution is correct, 
+please visit the Discussion forum to see if your peers are experiencing similar errors. If the issue isn't resolved in 24 hours, please reach 
+out to Coursera through our Help Center.

@@ -67,14 +67,8 @@ object Main extends App {
   println("Now generating grid or tiles for all the years")
   val t0 = System.nanoTime()
   generateTiles(yearlyData, generateImage)
-  //  val getTemp = makeGrid(averageTemperaturesPerStation2015.collect)
   val t1 = System.nanoTime()
   println(s"It took ${(t1 - t0) / 1e9} seconds to build the grid/tiles for 2015")
-  //  println(s"Temperature at (10,10): ${getTemp(GridLocation(10, 10))}")
-  //  println(s"Temperature at (0,0): ${getTemp(GridLocation(0, 0))}")
-  //  println(s"Temperature at (-10,-10): ${getTemp(GridLocation(-10, -10))}")
-  //  println(s"Temperature at (10,-10): ${getTemp(GridLocation(10, -10))}")
-  //  println(s"Temperature at (-10,10): ${getTemp(GridLocation(-10, 10))}")
 
   sc.stop()
 }

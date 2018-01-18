@@ -19,8 +19,6 @@ object Visualization {
   def predictTemperature(locationsTemperatures: Iterable[(Location, Temperature)], location: Location): Temperature = {
     val p = 4
     val (n, d) = locationsTemperatures.par.aggregate((0.0d, 0.0d))((acc, locTemp) => {
-      //val gcDist = location.toPoint.haversineEarthDistance(locTemp._1.toPoint)
-      //val gcDist = location.altDistanceTo(locTemp._1)
       val gcDist = location.gcDistanceTo(locTemp._1)
       val weight = if (gcDist < 1.0d) {
         1000 - (gcDist * 1000).toInt
@@ -103,33 +101,10 @@ object Visualization {
     
     val pixels = (0 until width * height).par.map(idx => {
       val color = interpolateColor(colors, predictTemperature(temperatures, new Location(idx % width, idx / width, width, height)))
-      val pixel = Pixel(color.red, color.green, color.blue, alpha)
-      (idx, pixel)
-    }).seq
-      .sortBy(_._1)
-      .map(_._2)
+      Pixel(color.red, color.green, color.blue, alpha)
+    })
     
     Image(width, height, pixels.toArray)
-    //    val width = 360
-    //    val height = 180
-    //    val alpha = 255
-    //    val pixels = new Array[Pixel](width * height)
-    //    for (y <- 0 until height; x <- 0 until width) {
-    //      val temp = predictTemperature(temperatures, new Location(x, y, width, height))
-    //      val color = interpolateColor(colors, temp)
-    //      pixels(y * width + x) = Pixel(color.red, color.green, color.blue, alpha)
-    //    }
-    //    Image(width, height, pixels)
-    //    val width = 180
-    //    val height = 90
-    //    val alpha = 255
-    //    val pixels = new Array[Pixel](width * height)
-    //    for (y <- 0 until height; x <- 0 until width) {
-    //      val temp = predictTemperature(temperatures, new Location(x, y, width, height))
-    //      val color = interpolateColor(colors, temp)
-    //      pixels(y * width + x) = Pixel(color.red, color.green, color.blue, alpha)
-    //    }
-    //    Image(width, height, pixels).scale(2, ScaleMethod.Bilinear)
   }
 
 }

@@ -13,9 +13,9 @@ trait ManipulationTest extends FunSuite with Checkers {
     val stationsFile = "stations.csv"
     val temperaturesFile = "2015.csv"
 
-    val stations = sc.broadcast(loadStations(stationsFile).collect.toMap)
+//    val stations = sc.broadcast(loadStations(stationsFile).collect.toMap)
 
-    val records = myLocateTemperatures(year, stations, temperaturesFile)
+    val records = myJoinedLocateTemperatures(year, stationsFile, temperaturesFile)
     val averages = myLocationYearlyAverageRecords(records)
 
     val t0 = System.nanoTime()

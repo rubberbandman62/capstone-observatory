@@ -28,6 +28,7 @@ trait Visualization2Test extends FunSuite with Checkers {
     println()
     println("Now generating grid or tiles for all the years")
     val grid = average(yearlyData)
+    println("grid created")
 
     val colorScale = Seq(
       (60.0d, Color(255, 255, 255)),
@@ -38,6 +39,8 @@ trait Visualization2Test extends FunSuite with Checkers {
       (-2.0d, Color(0, 255, 255)),
       (-7.0d, Color(0, 0, 255)))
 
+    println
+    println("Visualize grid to an image")
     val t0 = System.nanoTime()
     val image = visualizeGrid(grid, colorScale, Tile(0, 0, 0))
     val t1 = System.nanoTime()
