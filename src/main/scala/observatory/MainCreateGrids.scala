@@ -84,19 +84,19 @@ object MainCreateGrids extends App {
     (new java.io.File(filename)).exists()
   }
 
-  def saveAverageNormalGrid(grid: Grid): Unit = {
+  def saveAverageNormalGrid(grid: GridLocation => Temperature): Unit = {
     val folder = s"target/normals"
     val filename = s"normalgrid.csv"
     val csvWriter = openCSVOutputFile(folder, filename)
     val listOfRecords = new ArrayList[Array[String]]()
     for {
-      (gl, temp) <- grid.data
-    } listOfRecords.add(Array(gl.lat.toString, gl.lon.toString, temp.toString))
+      gl <- CachedGrid.gridLocations
+    } listOfRecords.add(Array(gl.lat.toString, gl.lon.toString, grid(gl).toString))
     csvWriter.writeAll(listOfRecords)
     csvWriter.close()
   }
 
-  def loadAverageNormalGrid(): Grid = {
+  def loadAverageNormalGrid(): CachedGrid = {
     val folder = s"target/normals"
     val filename = s"normalgrid.csv"
     val csvReader = openCSVInputFile(folder, filename)
@@ -104,7 +104,7 @@ object MainCreateGrids extends App {
     csvReader.close()
     val records = JavaConverters.asScalaIteratorConverter(listOfRecords.iterator()).asScala.toSeq
     val mappedRecords = Map(records.map(record => GridLocation(record(0).toInt, record(1).toInt) -> record(2).toDouble): _*)
-    new Grid(mappedRecords)
+    new CachedGrid(mappedRecords)
   }
 
   def generateImageForDeviations(year: Year, tile: Tile, data: GridLocation => Temperature): Unit = {
@@ -174,9 +174,9 @@ object MainCreateGrids extends App {
   println("Now generating average grid for normal temperatures calculated from the years 1975 to 1990")
   val t2 = System.nanoTime()
   val averageNormalsGrid = if (isAverageNormalsGridAvailable) {
-    loadAverageNormalGrid()
+    loadAverageNormalGrid().get _
   } else {
-    val newAverageNormalsGrid = calculateAverageGrid(normalData.map(_._2))
+    val newAverageNormalsGrid = average(normalData.map(_._2))
     saveAverageNormalGrid(newAverageNormalsGrid)
     println("normal grid has been saved to file")
     newAverageNormalsGrid
@@ -186,35 +186,35 @@ object MainCreateGrids extends App {
   println(s"Creating average grid for the years 1975 to 1990 took ${((t3 - t2) / 1e6).toInt / 1000.0d} seconds.")
 
   println()
-  println("Now visualize the normal under the year 1990")
+  println("Now visualize normal temperatures as year 1990")
   val t31 = System.nanoTime()
-  generateTiles(Seq((1990, averageNormalsGrid.get _)), generateImageForTemperatures)
+  generateTiles(Seq((1990, averageNormalsGrid)), generateImageForTemperatures)
   val t32 = System.nanoTime()
   println()
   println(s"Visualizing normal temperatures took ${((t32 - t31) / 1e6).toInt / 1000.0d} seconds.")
 
-  println()
-  println("Calculating deviation for the years 1991 to 2015")
-  val t4 = System.nanoTime()
-  val gridsPerYear = for (year <- 1991 to 1995) yield {
-    val t41 = System.nanoTime()
-    val temperaturesFile = s"$year.csv"
-    val locatedTemperatures = myJoinedLocateTemperatures(year, stationsFile, temperaturesFile)
-    val averageTemperaturesForYear = myLocationYearlyAverageRecords(locatedTemperatures).collect.toSeq
-    val t42 = System.nanoTime()
-    println()
-    println(s"Creating grids for $year took ${((t42 - t41) / 1e6).toInt / 1000.0d} seconds.")
-    (year, deviation(averageTemperaturesForYear, averageNormalsGrid.get _))
-  }
-  val t5 = System.nanoTime()
-  println()
-  println(s"Creating all the grids for 1991 to 2015 took ${((t5 - t4) / 1e6).toInt / 1000.0d} seconds.")
-
-  val t6 = System.nanoTime()
-  generateTiles(gridsPerYear, generateImageForDeviations)
-  val t7 = System.nanoTime()
-  println()
-  println(s"Creating all the images for 1991 to 2015 took ${((t7 - t6) / 1e6).toInt / 1000.0d} seconds.")
+//  println()
+//  println("Calculating deviation for the years 1991 to 2015")
+//  val t4 = System.nanoTime()
+//  val gridsPerYear = for (year <- 1991 to 1995) yield {
+//    val t41 = System.nanoTime()
+//    val temperaturesFile = s"$year.csv"
+//    val locatedTemperatures = myJoinedLocateTemperatures(year, stationsFile, temperaturesFile)
+//    val averageTemperaturesForYear = myLocationYearlyAverageRecords(locatedTemperatures).collect.toSeq
+//    val t42 = System.nanoTime()
+//    println()
+//    println(s"Creating grids for $year took ${((t42 - t41) / 1e6).toInt / 1000.0d} seconds.")
+//    (year, deviation(averageTemperaturesForYear, averageNormalsGrid))
+//  }
+//  val t5 = System.nanoTime()
+//  println()
+//  println(s"Creating all the grids for 1991 to 2015 took ${((t5 - t4) / 1e6).toInt / 1000.0d} seconds.")
+//
+//  val t6 = System.nanoTime()
+//  generateTiles(gridsPerYear, generateImageForDeviations)
+//  val t7 = System.nanoTime()
+//  println()
+//  println(s"Creating all the images for 1991 to 2015 took ${((t7 - t6) / 1e6).toInt / 1000.0d} seconds.")
 
   sc.stop()
 }

@@ -73,9 +73,10 @@ object Extraction {
   def locationYearlyAverageRecords(records: Iterable[(LocalDate, Location, Temperature)]): Iterable[(Location, Temperature)] =
     myLocationYearlyAverageRecords(sc.parallelize(records.toSeq)).collect()
 
-  def myLocationYearlyAverageRecords(records: RDD[(LocalDate, Location, Temperature)]): RDD[(Location, Temperature)] = {
-    records.map({ case (localdate, location, temp) => ((localdate.getYear, location), (temp, 1)) })
+  def myLocationYearlyAverageRecords(records: RDD[(LocalDate, Location, Temperature)]): RDD[(Location, Temperature)] = 
+    records.map({ 
+        case (localdate, location, temp) => ((localdate.getYear, location), (temp, 1)) 
+      })
       .reduceByKey((value1, value2) => (value1._1 + value2._1, value1._2 + value2._2), 4)
       .map({ case (key, value) => (key._2, value._1 / value._2) }).persist(StorageLevel.MEMORY_AND_DISK_SER)
-  }
 }

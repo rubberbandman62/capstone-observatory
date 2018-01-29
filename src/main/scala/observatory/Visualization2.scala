@@ -25,9 +25,9 @@ object Visualization2 {
     d11: Temperature
   ): Temperature = 
     d00 * (1 - point.x) * (1 - point.y) +
-    d10 * point.x * (1 - point.y) +
-    d01 * point.y * (1 - point.x) +
-    d11 * point.x * point.y 
+    d10 * point.y * (1 - point.x) +
+    d11 * point.x * point.y + 
+    d01 * point.x * (1 - point.y)
 
   /**
     * @param grid Grid to visualize
@@ -44,8 +44,10 @@ object Visualization2 {
     val width = 256
     val transparency = 127
     val pixels = tile.toListOfLocations(width).map(location => {
-      val (d00, d10, d01, d11) = Grid.findGridTemperatures(grid, location)
-      val cp = CellPoint(abs(location.lat - location.lat.toInt), abs(location.lon - location.lon.toInt))
+      val ((loc00, d00), (loc10, d10), (loc01, d01), (loc11, d11)) = CachedGrid.findGridTemperatures(grid, location)
+      val transformedLat = location.lat - loc00.lat
+      val transformedLon = location.lon - loc00.lon
+      val cp = CellPoint(abs(transformedLat - transformedLat.toInt), abs(transformedLon - transformedLon.toInt))
       val temp = bilinearInterpolation(cp, d00, d01, d10, d11)
       val color = interpolateColor(colors, temp)
       Pixel(color.red, color.green, color.blue, transparency)

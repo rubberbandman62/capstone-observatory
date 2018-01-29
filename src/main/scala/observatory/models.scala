@@ -17,6 +17,7 @@ import org.apache.commons.math3.util.FastMath.sqrt
 import org.apache.commons.math3.util.FastMath.tan
 import org.apache.commons.math3.util.FastMath.toDegrees
 import org.apache.commons.math3.util.FastMath.toRadians
+import scala.collection.mutable.HashMap
 
 /**
  * Introduced in Week 1. Represents a location on the globe.
@@ -104,13 +105,13 @@ case class Tile(x: Int, y: Int, zoom: Int) {
 
       if (level <= 1) {
         Seq(Seq(tileUpperLeft.toLocation, tileUpperRight.toLocation),
-          Seq(tileLowerLeft.toLocation, tileLowerRight.toLocation))
+            Seq(tileLowerLeft.toLocation, tileLowerRight.toLocation))
       } else {
         val leftList = tileUpperLeft.toListOfRowsOfLocations(level - 1) ++
-          tileLowerLeft.toListOfRowsOfLocations(level - 1)
+                       tileLowerLeft.toListOfRowsOfLocations(level - 1)
 
         val rightList = tileUpperRight.toListOfRowsOfLocations(level - 1) ++
-          tileLowerRight.toListOfRowsOfLocations(level - 1)
+                        tileLowerRight.toListOfRowsOfLocations(level - 1)
 
         leftList.zip(rightList).map({ case (l, r) => l ++ r })
       }
@@ -130,65 +131,184 @@ case class Tile(x: Int, y: Int, zoom: Int) {
  * @param lat Circle of latitude in degrees, -89 ≤ lat ≤ 90
  * @param lon Line of longitude in degrees, -180 ≤ lon ≤ 179
  */
-case class GridLocation(lat: Int, lon: Int)
-
-class Grid(val data: Map[GridLocation, Temperature]) {
-
-  def get(gridLocation: GridLocation): Double = {
-    val dlat = abs(gridLocation.lat % Grid.resolution)
-    val dlon = abs(gridLocation.lon % Grid.resolution)
-    val lat = gridLocation.lat + dlat
-    val lon = gridLocation.lon - dlon
-    data(GridLocation(lat, lon))
-  }
-
-  def +(that: Grid): Grid =
-    new Grid((for (location <- data.keys) yield (location, data(location) + that.data(location))).toMap)
-
-  def /(x: Int): Grid =
-    new Grid((for (location <- data.keys) yield (location, data(location) / x)).toMap)
+case class GridLocation(lat: Int, lon: Int) {
+  assert( -90 < lat && lat <=  90 && 
+         -180 <= lon && lon < 180, s"latitude $lat or longitude $lon not in the expected range.")
 }
 
-object Grid {
-  def apply(temperatures: Iterable[(Location, Temperature)]) = {
-    val newGrid = for {
-      lat <- Grid.maxy to Grid.miny by -resolution
-      lon <- Grid.minx to Grid.maxx by resolution
-    } yield {
-      val gridLocation = GridLocation(lat, lon)
+//case class ArrayGrid() {
+//  private val dataSize = (ArrayGrid.width / ArrayGrid.resolution) * (ArrayGrid.height / ArrayGrid.resolution)
+//
+//  private val data = new Array[Temperature](dataSize)
+//
+//  def get(gl: GridLocation): Temperature = 
+//    data(ArrayGrid.index(gl.lat, gl.lon))
+//    
+//  def +(that: ArrayGrid): ArrayGrid = {
+//    val newGrid = ArrayGrid()
+//    for (i <- 0 until dataSize) 
+//      newGrid.data(i) = this.data(i) + that.data(i)
+//    newGrid
+//  }
+//
+//  def /(number: Double): ArrayGrid = {
+//    val newGrid = ArrayGrid()
+//    for (i <- 0 until dataSize) 
+//      newGrid.data(i) = this.data(i) / number
+//    newGrid
+//  }
+//
+//}
+//
+//object ArrayGrid {
+//  val resolution: Int = 2
+//  val width: Int = 360
+//  val height: Int = 180
+//  
+//  private val minLon = -width / 2
+//  private val maxLon = minLon + width - 1
+//  private val minLat = -height / 2 + 1
+//  private val maxLat = minLat + height - 1
+//  
+//  def index(lat: Int, lon: Int) =
+//    -(lat / resolution - maxLat / resolution) * width / resolution + lon / resolution - minLon / resolution
+//    
+//  def apply(temperatures: Iterable[(Location, Temperature)]) = {
+//    val newGrid = new ArrayGrid()
+//    for (
+//      lat <- maxLat to minLat by -resolution;
+//      lon <- minLon to maxLon by resolution
+//    ) newGrid.data(index(lat, lon)) = Visualization.predictTemperature(temperatures, Location(lat, lon))
+//    newGrid
+//  }
+//
+//  def findGridTemperatures(g: GridLocation => Temperature, loc: Location): (Temperature, Temperature, Temperature, Temperature) = {
+//    val top = if (loc.lat < maxLat) (loc.lat + 1).toInt else maxLat
+//    val left = if (loc.lon > minLon) (loc.lon - 1).toInt else minLon
+//    val bottom = top - 1
+//    val right = left + 1
+//    val d00 = g(GridLocation(top, left))
+//    val d10 = g(GridLocation(top, right))
+//    val d01 = g(GridLocation(bottom, left))
+//    val d11 = g(GridLocation(bottom, right))
+//    (d00, d10, d01, d11)
+//  }
+//  
+//}
+//
+//class MapGrid(val data: Map[GridLocation, Temperature]) {
+//
+//  def get(gridLocation: GridLocation): Double = {
+//    val dlat = abs(gridLocation.lat % MapGrid.resolution)
+//    val dlon = abs(gridLocation.lon % MapGrid.resolution)
+//    val lat = gridLocation.lat + dlat
+//    val lon = gridLocation.lon - dlon
+//    data(GridLocation(lat, lon))
+//  }
+//
+//  def +(that: MapGrid): MapGrid =
+//    new MapGrid((for (location <- data.keys) yield (location, data(location) + that.data(location))).toMap)
+//
+//  def /(x: Int): MapGrid =
+//    new MapGrid((for (location <- data.keys) yield (location, data(location) / x)).toMap)
+//}
+//
+//object MapGrid {
+//  val resolution = 1
+//
+//  def apply(temperatures: Iterable[(Location, Temperature)]) = {
+//    val newGrid = for {
+//      lat <- MapGrid.maxy to MapGrid.miny by -resolution
+//      lon <- MapGrid.minx to MapGrid.maxx by resolution
+//    } yield {
+//      val gridLocation = GridLocation(lat, lon)
+//      val temp = Visualization.predictTemperature(temperatures, Location(lat, lon))
+//      (gridLocation, temp)
+//    }
+//    new MapGrid(newGrid.toMap)
+//  }
+//  
+//  def empty() = {
+//    val newGrid = for {
+//      lat <- MapGrid.maxy to MapGrid.miny by -resolution
+//      lon <- MapGrid.minx to MapGrid.maxx by resolution
+//    } yield {
+//      val gridLocation = GridLocation(lat, lon)
+//      (gridLocation, 0.0d)
+//    }
+//    new MapGrid(newGrid.toMap)
+//  }
+//
+//  def findGridTemperatures(g: GridLocation => Temperature, loc: Location): (Temperature, Temperature, Temperature, Temperature) = {
+//    val top = if (loc.lat < maxy) (loc.lat + 1).toInt else maxy
+//    val left = if (loc.lon > minx) (loc.lon - 1).toInt else minx
+//    val bottom = top - 1
+//    val right = left + 1
+//    val d00 = g(GridLocation(top, left))
+//    val d10 = g(GridLocation(top, right))
+//    val d01 = g(GridLocation(bottom, left))
+//    val d11 = g(GridLocation(bottom, right))
+//    (d00, d10, d01, d11)
+//  }
+//
+//  val width = 360
+//  val height = 180
+//  val minx = -width / 2
+//  val maxx = minx + width - 1
+//  val miny = -height / 2 + 1
+//  val maxy = miny + height - 1
+//  val dataSize = (width / resolution) * (height / resolution)
+//}
+
+case class CachedGrid(val temperatures: Iterable[(Location, Temperature)]) {
+  
+  private val data = HashMap[GridLocation, Temperature]()
+  val iterator = data.iterator
+
+  def get(gridLocation: GridLocation): Double = {
+    val dlat = abs(gridLocation.lat % CachedGrid.resolution)
+    val dlon = abs(gridLocation.lon % CachedGrid.resolution)
+    val lat = gridLocation.lat + dlat
+    val lon = gridLocation.lon - dlon
+    val key = GridLocation(lat, lon)
+    data.getOrElse(key, {
       val temp = Visualization.predictTemperature(temperatures, Location(lat, lon))
-      (gridLocation, temp)
-    }
-    new Grid(newGrid.toMap)
+      data.put(key, temp)
+      temp
+    })
   }
   
-  def empty() = {
-    val newGrid = for {
-      lat <- Grid.maxy to Grid.miny by -resolution
-      lon <- Grid.minx to Grid.maxx by resolution
-    } yield {
-      val gridLocation = GridLocation(lat, lon)
-      (gridLocation, 0.0d)
-    }
-    new Grid(newGrid.toMap)
+  def this(restoredData: Map[GridLocation, Temperature]) = {
+    this(restoredData.toIterable.map({ case (gl, temp) => (Location(gl.lat, gl.lon), temp) }))
+    restoredData.foreach({ case (gl, temp) => this.data.put(gl, temp) })
   }
+}
 
-  //  def index(lat: Int, lon: Int) = 
-  //   -(lat / resolution - maxy / resolution) * width / resolution + lon / resolution - minx / resolution
+object CachedGrid {
+  val resolution = 2
 
-  def findGridTemperatures(g: GridLocation => Temperature, loc: Location): (Temperature, Temperature, Temperature, Temperature) = {
-    val top = if (loc.lat < maxy) (loc.lat + 1).toInt else maxy
-    val left = if (loc.lon > minx) (loc.lon - 1).toInt else minx
+  def findGridTemperatures(g: GridLocation => Temperature, loc: Location): ((GridLocation,Temperature), (GridLocation,Temperature), (GridLocation,Temperature), (GridLocation,Temperature)) = {
+    val top = scala.math.ceil(loc.lat).toInt
+    val left = scala.math.floor(loc.lon).toInt
     val bottom = top - 1
-    val right = left + 1
-    val d00 = g(GridLocation(top, left))
-    val d10 = g(GridLocation(top, right))
-    val d01 = g(GridLocation(bottom, left))
-    val d11 = g(GridLocation(bottom, right))
-    (d00, d10, d01, d11)
+    val right = if (left < maxx) left + 1 else minx 
+    val glTopLeft = GridLocation(top, left)
+    val glTopRight = GridLocation(top, right)
+    val glBottomRight = GridLocation(bottom, right)
+    val glBottomLeft = GridLocation(bottom, left) 
+    ((glBottomLeft,g(glBottomLeft)), 
+     (glBottomRight,g(glBottomRight)), 
+     (glTopLeft,g(glTopLeft)), 
+     (glTopRight,g(glTopRight)))
   }
 
-  val resolution = 1
+  lazy val gridLocations = {
+    for {
+      lat <- maxy to miny by -resolution
+      lon <- minx to maxx by resolution
+    } yield GridLocation(lat, lon)
+  }
+  
   val width = 360
   val height = 180
   val minx = -width / 2
